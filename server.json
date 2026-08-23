@@ -1,40 +1,39 @@
 {
-  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-07-09/server.schema.json",
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.dockndevai/mcp-azure-devops",
-  "description": "Model Context Protocol server for Azure DevOps — boards, repos, pipelines, and projects with governance controls (access modes, project scoping, protected projects, delete gating, confirmation, dry-run, audit).",
-  "status": "active",
+  "description": "Azure DevOps boards, repos, pipelines & projects for AI agents — governed.",
+  "version": "0.1.0",
   "repository": {
     "url": "https://github.com/dockndevai/mcp-azure-devops",
     "source": "github"
   },
-  "version": "0.1.0",
   "packages": [
     {
-      "registry_type": "npm",
-      "registry_base_url": "https://registry.npmjs.org",
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "@dockndevai/mcp-azure-devops",
       "version": "0.1.0",
       "transport": {
         "type": "stdio"
       },
-      "environment_variables": [
+      "environmentVariables": [
         {
           "name": "AZDO_ORG_URL",
           "description": "Azure DevOps organization URL, e.g. https://dev.azure.com/your-org.",
-          "is_required": true,
-          "is_secret": false
+          "isRequired": true,
+          "isSecret": false
         },
         {
           "name": "AZDO_PAT",
           "description": "Personal Access Token (read-only to start).",
-          "is_required": true,
-          "is_secret": true
+          "isRequired": true,
+          "isSecret": true
         },
         {
           "name": "AZDO_MODE",
           "description": "Access mode: read-only | read-write | admin.",
-          "is_required": false,
-          "is_secret": false
+          "isRequired": false,
+          "isSecret": false
         }
       ]
     }
