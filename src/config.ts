@@ -33,10 +33,16 @@ function parseMode(): AccessMode {
 }
 
 export function loadConfig(): AppConfig {
-  const org = process.env.AZDO_ORG_URL || (process.env.AZDO_ORG ? `https://dev.azure.com/${process.env.AZDO_ORG}` : "");
-  if (!org) throw new Error("Missing AZDO_ORG_URL (or AZDO_ORG) — your Azure DevOps organization.");
-  const pat = process.env.AZDO_PAT;
-  if (!pat) throw new Error("Missing AZDO_PAT — an Azure DevOps Personal Access Token.");
+  // Fall back to placeholders so the server can start and advertise its tools
+  // (introspection); API calls fail only when a tool is actually invoked.
+  const org = process.env.AZDO_ORG_URL || (process.env.AZDO_ORG ? `https://dev.azure.com/${process.env.AZDO_ORG}` : "https://dev.azure.com/your-org");
+  const pat = process.env.AZDO_PAT ?? "";
+  if (!process.env.AZDO_ORG_URL && !process.env.AZDO_ORG) {
+    process.stderr.write("[azure-devops-mcp] WARNING: AZDO_ORG_URL/AZDO_ORG not set; using a placeholder org.\n");
+  }
+  if (!pat) {
+    process.stderr.write("[azure-devops-mcp] WARNING: AZDO_PAT not set; tool calls will fail until provided.\n");
+  }
   return {
     connection: {
       orgUrl: org.replace(/\/+$/, ""),
