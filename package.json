@@ -1,7 +1,7 @@
 {
   "name": "@dockndevai/mcp-azure-devops",
   "mcpName": "io.github.dockndevai/mcp-azure-devops",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Model Context Protocol server for Azure DevOps — boards, repos, pipelines, and projects with governance controls (access modes, project scoping, protected projects, delete gating, confirmation, dry-run, audit).",
   "type": "module",
   "license": "MIT",
