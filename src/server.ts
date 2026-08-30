@@ -14,7 +14,7 @@ export function buildServer(config: AppConfig): { server: McpServer; enabled: st
   const policy = new SecurityPolicy(config.security);
   const client = new AzdoClient(config.connection);
   const ctx: ToolContext = { client, policy };
-  const server = new McpServer({ name: "mcp-azure-devops", version: "0.1.1" });
+  const server = new McpServer({ name: "mcp-azure-devops", version: "0.1.2" });
 
   const enabled: string[] = [];
   for (const tool of ALL_TOOLS) {
