@@ -26,6 +26,7 @@ A [Model Context Protocol](https://modelcontextprotocol.io) server for **Azure D
 | Typed confirmation | `AZDO_REQUIRE_CONFIRMATION` | `true` | High-impact ops require `confirm` to equal the target name — not just a boolean. |
 | Preview | `AZDO_DRY_RUN` | `false` | Write/admin tools validate + log intent, then return. |
 | Audit trail | `AZDO_AUDIT_LOG` | `true` | JSON line to stderr per guarded operation. |
+| Interactive confirmation | *(automatic)* | — | Destructive & high-impact actions prompt the human to approve via MCP elicitation before running; clients without elicitation fall back to the `*_ALLOW_*` gate. |
 
 ## Tools
 

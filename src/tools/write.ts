@@ -97,13 +97,15 @@ export const writeTools: ToolDef[] = [
         branch: z.string().optional().describe("Branch to run, e.g. main"),
       },
     },
-    handler: async (a, { client, policy }) => {
+    handler: async (a, { client, policy, confirm }) => {
       const project = a.project as string;
       const { dryRun } = policy.guard({ tool: "run_pipeline", capability: "write", project });
       const body = a.branch
         ? { resources: { repositories: { self: { refName: `refs/heads/${(a.branch as string).replace(/^refs\/heads\//, "")}` } } } }
         : {};
       if (dryRun) return textResult(`[dry-run] Would run pipeline ${a.pipelineId} in '${project}'${a.branch ? ` on ${a.branch}` : ""}.`);
+      const ok = await confirm.confirm({ action: "run pipeline", target: `pipeline ${a.pipelineId} in ${project}`, details: { branch: a.branch as string | undefined } });
+      if (!ok.approved) return textResult(`Run cancelled — ${ok.reason}.`);
       return jsonResult(await client.runPipeline(project, a.pipelineId as number, body));
     },
   },
