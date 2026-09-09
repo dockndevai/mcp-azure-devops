@@ -51,7 +51,7 @@ export const adminTools: ToolDef[] = [
         confirm: z.string().optional().describe("Must equal the project name to proceed"),
       },
     },
-    handler: async (a, { client, policy }) => {
+    handler: async (a, { client, policy, confirm }) => {
       const projectName = a.projectName as string;
       const { dryRun } = policy.guard({
         tool: "delete_project",
@@ -62,6 +62,8 @@ export const adminTools: ToolDef[] = [
         confirmProvided: a.confirm as string | undefined,
       });
       if (dryRun) return textResult(`[dry-run] Would delete project '${projectName}' (${a.projectId}).`);
+      const ok = await confirm.confirm({ action: "delete project (repos, work items, pipelines)", target: projectName });
+      if (!ok.approved) return textResult(`Deletion cancelled — ${ok.reason}.`);
       await client.deleteProject(a.projectId as string);
       return jsonResult({ deleted: true, project: projectName });
     },
