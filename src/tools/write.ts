@@ -39,7 +39,7 @@ export const writeTools: ToolDef[] = [
         title: z.string().optional(),
         state: z.string().optional().describe("e.g. Active, Resolved, Closed"),
         assignedTo: z.string().optional(),
-        fields: z.record(z.any()).optional().describe("Extra field map, e.g. { \"System.Tags\": \"urgent\" }"),
+        fields: z.record(z.string(), z.any()).optional().describe("Extra field map, e.g. { \"System.Tags\": \"urgent\" }"),
       },
     },
     handler: async (a, { client, policy }) => {
