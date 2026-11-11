@@ -17,6 +17,20 @@ like any other privileged automation and grant it the least access it needs.
   (default), `delete_project` also requires a `confirm` argument that exactly
   equals the project name — a boolean is not enough. This prevents an agent from
   deleting the wrong project on a loose instruction.
+- **Require a human for destructive and high-impact ops.** Set `AZDO_REQUIRE_HUMAN_APPROVAL=true`
+  so `delete_project` and `run_pipeline` are refused when the client cannot show an approval
+  prompt. Each approval is bound to the exact tool and arguments (fingerprint) and to the target's
+  version: for a project, its id with the service's `revision` and `lastUpdateTime` (contents such
+  as repos or work items do not bump these); for a pipeline, its id and definition `revision` (a
+  change to the YAML file in the repository does not). If the target changed while the human was
+  deciding, the action is refused. `delete_project` also verifies that `projectId` really is the
+  project named by `projectName` (the name drives the protected-project and allowlist checks) and
+  asks the human to type the project name. That typed prompt is separate from the `confirm` tool
+  argument: `confirm` is supplied by the model and checked by policy before anything is shown (and
+  needs `AZDO_REQUIRE_CONFIRMATION=true`); the typed prompt is answered by the human and is asked
+  whenever the client can elicit. Approval receipts are written to the audit log
+  (`"audit":"approval"`, with `approvedBy` = `human` or `flag-only`). A prompt nobody answers is a
+  refusal.
 - **Preview with dry-run.** `AZDO_DRY_RUN=true` validates and logs write intent
   without calling Azure DevOps.
 - **Keep the audit log on.** `AZDO_AUDIT_LOG=true` (default) writes a JSON line per

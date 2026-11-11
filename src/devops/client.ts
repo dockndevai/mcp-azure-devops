@@ -3,7 +3,12 @@
  * Auth is a Personal Access Token sent as HTTP Basic (username empty).
  * https://learn.microsoft.com/rest/api/azure/devops
  */
+import { createHash } from "node:crypto";
 import type { AzdoConnection } from "../config.js";
+
+function digest(value: unknown): string {
+  return createHash("sha256").update(JSON.stringify(value)).digest("hex").slice(0, 12);
+}
 
 export class AzdoError extends Error {
   constructor(message: string, readonly status: number, readonly body?: string) {
@@ -50,6 +55,52 @@ export class AzdoClient {
     } finally {
       clearTimeout(timer);
     }
+  }
+
+  private async getOrUndefined<T>(path: string): Promise<T | undefined> {
+    try {
+      return await this.request<T>("GET", path);
+    } catch (err) {
+      if (err instanceof AzdoError && err.status === 404) return undefined;
+      throw err;
+    }
+  }
+
+  // --- Version tokens (pinned across a human-approval prompt) ----------------
+  /**
+   * Project: id + the service's own `revision` + `lastUpdateTime` (both change when the project is
+   * edited). `state` is excluded (it flips to `deleting` mid-operation). If a deployment returns neither
+   * revision nor lastUpdateTime, falls back to id, name, description and visibility. NOT detected: changes
+   * to the project's CONTENTS (repos, work items, pipelines) — those do not bump the project revision.
+   */
+  async projectVersion(projectId: string): Promise<string | undefined> {
+    const p = await this.getOrUndefined<{
+      id?: string;
+      name?: string;
+      description?: string;
+      visibility?: string;
+      revision?: number;
+      lastUpdateTime?: string;
+    }>(`/_apis/projects/${encodeURIComponent(projectId)}`);
+    if (!p) return undefined;
+    if (p.revision !== undefined || p.lastUpdateTime !== undefined) {
+      return digest({ id: p.id ?? projectId, revision: p.revision ?? null, lastUpdateTime: p.lastUpdateTime ?? null });
+    }
+    return digest({ id: p.id ?? projectId, name: p.name, description: p.description, visibility: p.visibility });
+  }
+
+  /**
+   * Pipeline definition: id + `revision` (increments on every definition edit). NOT detected: a change to the
+   * YAML file in the repository (the revision tracks the pipeline definition, not the branch contents), or to
+   * variables / service connections the run will consume.
+   */
+  async pipelineVersion(project: string, pipelineId: number): Promise<string | undefined> {
+    const p = await this.getOrUndefined<{ id?: number; revision?: number; name?: string; folder?: string }>(
+      `/${encodeURIComponent(project)}/_apis/pipelines/${pipelineId}`,
+    );
+    if (!p) return undefined;
+    if (p.revision !== undefined) return digest({ id: p.id ?? pipelineId, revision: p.revision });
+    return digest({ id: p.id ?? pipelineId, name: p.name, folder: p.folder });
   }
 
   // --- Projects / teams / process --------------------------------------------

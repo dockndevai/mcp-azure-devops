@@ -26,7 +26,8 @@ A [Model Context Protocol](https://modelcontextprotocol.io) server for **Azure D
 | Typed confirmation | `AZDO_REQUIRE_CONFIRMATION` | `true` | High-impact ops require `confirm` to equal the target name — not just a boolean. |
 | Preview | `AZDO_DRY_RUN` | `false` | Write/admin tools validate + log intent, then return. |
 | Audit trail | `AZDO_AUDIT_LOG` | `true` | JSON line to stderr per guarded operation. |
-| Interactive confirmation | *(automatic)* | — | Destructive & high-impact actions prompt the human to approve via MCP elicitation before running; clients without elicitation fall back to the `*_ALLOW_*` gate. |
+| Interactive confirmation | *(automatic)* | — | Destructive & high-impact actions (`delete_project`, `run_pipeline`) prompt the human to approve via MCP elicitation before running. The prompt shows the tool, the exact arguments and a fingerprint; the target's version is pinned across the prompt and the action is refused if it changed; a prompt nobody answers is a refusal. `delete_project` also asks the human to type the project name (this is separate from the model-supplied `confirm` argument above, which is checked first and still required when `AZDO_REQUIRE_CONFIRMATION=true`). |
+| Require a human | `AZDO_REQUIRE_HUMAN_APPROVAL` | `false` | When `true`, `delete_project` and `run_pipeline` are **refused** if the client cannot elicit (instead of falling back to the `*_ALLOW_*` gate alone). |
 
 ## Tools
 
