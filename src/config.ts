@@ -58,6 +58,7 @@ export function loadConfig(): AppConfig {
       requireConfirmation: bool("AZDO_REQUIRE_CONFIRMATION", true),
       dryRun: bool("AZDO_DRY_RUN", false),
       auditLog: bool("AZDO_AUDIT_LOG", true),
+      requireHumanApproval: bool("AZDO_REQUIRE_HUMAN_APPROVAL", false),
     },
   };
 }

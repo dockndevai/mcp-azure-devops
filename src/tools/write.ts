@@ -104,7 +104,13 @@ export const writeTools: ToolDef[] = [
         ? { resources: { repositories: { self: { refName: `refs/heads/${(a.branch as string).replace(/^refs\/heads\//, "")}` } } } }
         : {};
       if (dryRun) return textResult(`[dry-run] Would run pipeline ${a.pipelineId} in '${project}'${a.branch ? ` on ${a.branch}` : ""}.`);
-      const ok = await confirm.confirm({ action: "run pipeline", target: `pipeline ${a.pipelineId} in ${project}`, details: { branch: a.branch as string | undefined } });
+      const pipelineId = a.pipelineId as number;
+      const ok = await confirm.confirm({
+        action: "run pipeline",
+        target: `pipeline ${pipelineId} in ${project}`,
+        details: { branch: a.branch as string | undefined },
+        probe: () => client.pipelineVersion(project, pipelineId),
+      });
       if (!ok.approved) return textResult(`Run cancelled — ${ok.reason}.`);
       return jsonResult(await client.runPipeline(project, a.pipelineId as number, body));
     },

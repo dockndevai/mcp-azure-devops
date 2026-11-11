@@ -4,6 +4,31 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-11-11
+
+### Security
+- **Approval no longer fails open on timeout.** The human-approval prompt used the MCP SDK's default
+  60 s request timeout, and a timeout fell through to "approved" (the `AZDO_ALLOW_DELETE` gate had
+  already passed). A prompt nobody answered therefore auto-approved a destructive operation. A timeout
+  is now a refusal, and the wait defaults to 5 minutes.
+- `delete_project` now checks that `projectId` is the project named by `projectName` before anything is
+  prompted or deleted. Previously the protected-project / allowlist checks and the typed `confirm`
+  used the model-supplied `projectName` while the delete used `projectId`, so the two could disagree.
+
+### Added
+- **Approvals are bound to the exact action.** The prompt shows the tool, the full (secret-redacted)
+  arguments and a fingerprint; every approval and refusal is written to the audit log as
+  `"audit":"approval"` with the fingerprint, resource version and `approvedBy` (`human` / `flag-only`).
+- **Approvals are bound to the target's version.** `delete_project` (project id + `revision` +
+  `lastUpdateTime`) and `run_pipeline` (pipeline id + definition `revision`) read a version token before
+  the prompt and again after the human answers, and refuse if it changed.
+- `AZDO_REQUIRE_HUMAN_APPROVAL=true` — refuse `delete_project` / `run_pipeline` when the client cannot elicit.
+- `delete_project` asks the human to type the project name. This is in addition to, not instead of, the
+  existing model-supplied `confirm` argument (`AZDO_REQUIRE_CONFIRMATION`), which is unchanged and still
+  checked first.
+
+Tracking issue: https://github.com/dockndevai/mcp-core/issues/1
+
 ## [0.3.5] - 2026-11-09
 
 ### Changed

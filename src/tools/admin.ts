@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { ToolDef } from "./types.js";
+import { AzdoError } from "../devops/client.js";
 import { jsonResult, textResult } from "./types.js";
 
 /**
@@ -53,6 +54,7 @@ export const adminTools: ToolDef[] = [
     },
     handler: async (a, { client, policy, confirm }) => {
       const projectName = a.projectName as string;
+      const projectId = a.projectId as string;
       const { dryRun } = policy.guard({
         tool: "delete_project",
         capability: "admin",
@@ -62,9 +64,27 @@ export const adminTools: ToolDef[] = [
         confirmProvided: a.confirm as string | undefined,
       });
       if (dryRun) return textResult(`[dry-run] Would delete project '${projectName}' (${a.projectId}).`);
-      const ok = await confirm.confirm({ action: "delete project (repos, work items, pipelines)", target: projectName });
+      // The policy checks (protected projects, allowlist) and the typed confirmation use `projectName`, but
+      // the project that is deleted is `projectId`. Make sure they are the same project.
+      const actual = (await client.getProject(projectId).catch((err: unknown) => {
+        if (err instanceof AzdoError && err.status === 404) return undefined;
+        throw err;
+      })) as { name?: string } | undefined;
+      if (!actual) return textResult(`Deletion cancelled — project ${projectId} was not found.`);
+      if (actual.name !== projectName) {
+        return textResult(`Deletion cancelled — project ${projectId} is named '${actual.name}', not '${projectName}'.`);
+      }
+      // typed: the human must also type the project name. This is separate from (and in addition to) the
+      // model-supplied `confirm` argument checked by policy.guard above, which a human never sees.
+      const ok = await confirm.confirm({
+        action: "delete project (repos, work items, pipelines)",
+        target: projectName,
+        details: { projectId },
+        typed: true,
+        probe: () => client.projectVersion(projectId),
+      });
       if (!ok.approved) return textResult(`Deletion cancelled — ${ok.reason}.`);
-      await client.deleteProject(a.projectId as string);
+      await client.deleteProject(projectId);
       return jsonResult({ deleted: true, project: projectName });
     },
   },
